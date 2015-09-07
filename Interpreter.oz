@@ -1,3 +1,6 @@
+\include 'Unify.oz'
+\include 'SingleAssignmentStore.oz'
+
 functor
 import
 	Browser(browse:Browse)
@@ -38,8 +41,9 @@ define SemanticStack Store SASCounter Environment
 				skip
 			[] semanticStatement([localvar ident(X) S] E) then
 				{Push S {Adjoin E environment(X:{NextSASCounter})}}
-			% [] semanticStatement(stmt: [bind ident(X) ident(Y)] env: E) then
-			% 	{BindStore X Y}
+			[] semanticStatement([bind ident(X) ident(Y)] E) then
+				% {BindStore X Y}
+				skip
 			[] semanticStatement(S1|S2 E) then 
 				{Push S2 E}
 				{Push S1 E}
@@ -48,7 +52,7 @@ define SemanticStack Store SASCounter Environment
 		end
 	end
 
-	{Push [localvar ident(x) [localvar ident(y) [localvar ident(x) [nop]]]] nil}
+	{Push [[localvar ident(x) [localvar ident(y) [localvar ident(x) [nop]]]] [localvar ident(a) [nop]]] Environment}
 	{Interpreter}
 
 end

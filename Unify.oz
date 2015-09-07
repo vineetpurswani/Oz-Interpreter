@@ -9,10 +9,10 @@
 %% 2. A record -- [record label [[feature expression]
 %%                               [feature expression] ...]]
 %%
-%% 3. An identifier -- in this case we look at the encosing
+%% 3. An identifier -- in this case we look at the enclosing
 %%    environment and the SAS.
 
-\insert 'SingleAssignmentStore.oz'
+\include 'SingleAssignmentStore.oz'
 
 declare
 
