@@ -9,10 +9,10 @@
 %% 2. A record -- [record label [[feature expression]
 %%                               [feature expression] ...]]
 %%
-%% 3. An identifier -- in this case we look at the enclosing
+%% 3. An identifier -- in this case we look at the encosing
 %%    environment and the SAS.
 
-\include 'SingleAssignmentStore.oz'
+\insert 'SingleAssignmentStore.oz'
 
 declare
 
@@ -26,6 +26,8 @@ fun {SubstituteIdentifiers Expression Environment}
     {SubstituteIdentifiers Head Environment} |
     {SubstituteIdentifiers Tail Environment}
   [] ident(X) then
+    % {Browse Environment.X}
+    % {Browse {Dictionary.entries SAS}}
     {RetrieveFromSAS Environment.X}
   else
     Expression
@@ -36,6 +38,7 @@ end
 proc {Unify Expression1 Expression2 Environment}
   Expression1S = {SubstituteIdentifiers Expression1 Environment}
   Expression2S = {SubstituteIdentifiers Expression2 Environment}
+  %{Browse unifying(Expression1S Expression2S)}
 in
   {UnifySubstituted Expression1S Expression2S nil}
 end
@@ -56,6 +59,8 @@ end
 
 proc {UnifyInternal Expression1 Expression2 UnificationsDone}
   %% Check if we've already performed this particular unification
+  {Browse Expression1}
+  {Browse Expression1}
   if {List.member [Expression1 Expression2] UnificationsDone} orelse
     {List.member [Expression2 Expression1] UnificationsDone} then
     skip
@@ -83,11 +88,11 @@ proc {UnifyInternal Expression1 Expression2 UnificationsDone}
       else
         {Raise incompatibleTypes(Expression1 Expression2)}
       end
-    [] record|Record1Label|Record1FeaturePairs then
+    [] record|Record1Label|Record1FeaturePairs|nil then
       %% Again, Expression2 is not an identifier. It has to be a literal
       %% or a record.
       case Expression2
-      of record|Record2Label|Record2FeaturePairs then
+      of record|Record2Label|Record2FeaturePairs|nil then
         %% The record labels have to be the same, and so do the feature
         %% pairs.
         if Record1Label == Record2Label andthen {IsAritySame Record1FeaturePairs
