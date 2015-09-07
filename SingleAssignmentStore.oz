@@ -24,7 +24,6 @@ fun {NextSASCounter}
 end
 
 fun {RetrieveFromSAS Key}
-	% {Browse {Dictionary.entries SAS}}
 	if {Dictionary.member SAS Key} then
 		case {Dictionary.get SAS Key} of unbound then equivalence(Key)
 		[] reference(X) then {RetrieveFromSAS X}
@@ -35,7 +34,6 @@ end
 fun {AddKeyToSAS}
 	local Key = {NextSASCounter} in
 		{Dictionary.put SAS Key unbound}
-		% {Browse {Dictionary.entries SAS}}
 		Key
 	end
 end

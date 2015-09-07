@@ -1,5 +1,5 @@
 \insert 'Unify.oz'
-\insert 'SingleAssignmentStore.oz'
+% \insert 'SingleAssignmentStore.oz'
 
 % functor
 % import
@@ -9,6 +9,7 @@ declare SemanticStack Store Environment
 
 SemanticStack = {NewCell nil} 
 Store = {NewDictionary}
+% SASCounter = {NewCell 0}
 Environment = environment()
 
 proc {Push Stmt Env}
@@ -26,6 +27,13 @@ fun {Pull}
 	end
 end
 
+% fun {NextSASCounter}
+% 	local C = @SASCounter in
+% 		SASCounter := @SASCounter+1
+% 		C
+% 	end
+% end
+
 proc {Interpreter}
 	{Browse @SemanticStack}
 	case @SemanticStack of nil then skip
@@ -34,11 +42,13 @@ proc {Interpreter}
 			skip
 		[] semanticStatement([localvar ident(X) S] E) then
 			{Push S {Adjoin E environment(X:{AddKeyToSAS})}}
-		[] semanticStatement([bind Exp1 Exp2] E) then
-			% {BindRefToKeyInSAS E.X E.Y}
-			{Unify Exp1 Exp2 E}
-		%[] semanticStatement([bind ident(X) V] E) then
-		%	{BindValueToKeyInSAS E.X V}
+		[] semanticStatement([bind ident(X) ident(Y)] E) then
+			{Unify ident(X) ident(Y) E}
+		[] semanticStatement([bind ident(X) V] E) then
+			% {BindValueToKeyInSAS E.X V}
+			% case V of literal(_) then {Unify ident(X) V E}
+			% skip
+			{Unify ident(X) V E}
 		[] semanticStatement(S1|S2 E) then 
 			{Push S2 E}
 			{Push S1 E}
@@ -47,11 +57,12 @@ proc {Interpreter}
 	end
 end
 
-{Push [localvar ident(foo)
- [localvar ident(bar)
-  [%[bind ident(foo) 12]
-   %[bind ident(bar) 21]
-   [bind ident(foo) ident(bar)]]]] Environment}
+{Push 
+[localvar ident(foo)
+  [localvar ident(bar)
+   [[bind ident(foo) [record literal(person) [literal(name) ident(bar)]]]
+    [bind ident(bar) [record literal(person) [literal(name) ident(foo)]]]
+    [bind ident(foo) ident(bar)]]]] Environment}
 {Interpreter}
 {Browse {Dictionary.entries SAS}}
 % end
