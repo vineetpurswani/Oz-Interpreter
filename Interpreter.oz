@@ -34,6 +34,19 @@ end
 % 	end
 % end
 
+fun {AddArgsToClosure ArgListFormal ArgListActual Closure E}
+	{Browse ArgListFormal#ArgListActual}
+	case ArgListFormal 
+	of nil then Closure
+	[] ident(H)|T then 
+		case ArgListActual
+		of nil then raise error() end
+		[] ident(H1)|T1 then
+			{AddArgsToClosure T T1 {Adjoin Closure environment(H:E.H1)} E}
+		end
+	end
+end
+
 proc {Interpreter}
 	{Browse @SemanticStack}
 	{Browse {Dictionary.entries SAS}}
@@ -49,10 +62,33 @@ proc {Interpreter}
 			% {BindValueToKeyInSAS E.X V}
 			% case V of literal(_) then {Unify ident(X) V E}
 			% skip
-			case V of [proc ArgList Stmt] 
-			then {Closure ArgList Stmt E}
-			else {Unify ident(X) V E}
-
+			local Closure in
+				Closure = E % calculate your closure here
+				case V of [procedure ArgList Stmt] 
+				% calculate closure. But for now I am taking the superset i.e. E
+				then 
+					% E is the current closure
+					% Closure = {AddArgsToCclosure ArgList E} 
+					{Unify ident(X) procedure(ArgList Stmt Closure) E}
+				else {Unify ident(X) V E}
+				end
+			end
+		[] semanticStatement([apply ident(X) ArgListActual] E) then
+			local XSASvalue in
+				XSASvalue = {RetrieveFromSAS E.X}
+				case XSASvalue of procedure(ArgListFormal Stmt Closure) then
+					% {Browse ArgListFormal#Stmt#Closure}
+					% {Browse ArgListActual}
+					if {Length ArgListFormal} \= {Length ArgListActual} then raise argumentsdonotmatch() end
+					else
+						local NewClosure in
+							NewClosure = {AddArgsToClosure ArgListFormal ArgListActual Closure E}
+							{Push Stmt NewClosure}
+						end
+					end
+				else raise xnotaprocedure() end
+				end
+			end
 		% Straight forward If Else 	
 		[] semanticStatement([conditional ident(X) S1 S2] E) then
 			local XSASvalue in
@@ -61,7 +97,7 @@ proc {Interpreter}
 				elseif XSASvalue == literal(t) then {Push S1 E}
 				elseif XSASvalue == literal(f) then {Push S2 E}
 				else raise wrongtype(X) end
-				end
+				endd
 			end
 		% Pattern matching 
 		[] semanticStatement([match ident(X) P1 S1 S2] E) then
@@ -165,6 +201,11 @@ fun {CompareFunc R1 R2}
 	end
 end
 
+
+% Example for procedure
+
+{Push [localvar ident(result) [localvar ident(foo) [[bind ident(foo) [procedure [ident(x1)] [bind ident(x1) literal(1)]]] [apply ident(foo) [ident(result)]]]]] Environment}
+
 % Example for sort
 % {Browse {RecordSort [[literal(quuz) literal(42)]
 %                        [literal(quux) literal(314)]]}}
@@ -200,19 +241,19 @@ end
 
 
 % for pattern match passes
-{Push  [localvar ident(foo)
-  [localvar ident(result)
-   [[bind ident(foo) [record literal(bar)
-                       [[literal(baz) literal(42)]
-                       [literal(quux) literal(314)]]]]
-    [match ident(foo) [record literal(bar)
-                           [[literal(baz) ident(fortytwo)]
-                           [literal(quux) ident(pitimes100)]]]
-     [bind ident(result) ident(fortytwo)] %% if matched
-     [bind ident(result) literal(314)]] %% if not matched
-    %% This will raise an exception if result is not 42
-    [bind ident(result) literal(42)]
-    ]]] Environment}
+% {Push  [localvar ident(foo)
+%   [localvar ident(result)
+%    [[bind ident(foo) [record literal(bar)
+%                        [[literal(baz) literal(42)]
+%                        [literal(quux) literal(314)]]]]
+%     [match ident(foo) [record literal(bar)
+%                            [[literal(baz) ident(fortytwo)]
+%                            [literal(quux) ident(pitimes100)]]]
+%      [bind ident(result) ident(fortytwo)] %% if matched
+%      [bind ident(result) literal(314)]] %% if not matched
+%     %% This will raise an exception if result is not 42
+%     [bind ident(result) literal(42)]
+%     ]]] Environment}
 
 
 % for pattern match fails
