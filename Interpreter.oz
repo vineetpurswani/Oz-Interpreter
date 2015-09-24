@@ -1,16 +1,29 @@
+%% ---------------------------------------------------------------------------------
+%% Authors:
+%% Vineet Purswani			12813
+%% Ayushman Sisodiya		12188
+%% Deepak Kumar 			12228
+
+%% Global Variables:
+%% SemanticStack 	- Stack data structure to store semantic statements
+%% Program 			- AST string of the program
+
+%% Functions and procedures:
+%% Push 		- push a semantic statement on the semantic stack
+%% Pull 		- pull a semantic statement from the top of the semantic stack
+%% Interpreter 	- recursive interpreting procedure that runs over the program given.
+%% ---------------------------------------------------------------------------------
+
 \insert 'Unify.oz'
-% \insert 'SingleAssignmentStore.oz'
 
-% functor
-% import
-% 	Browser(browse:Browse)
-
-declare SemanticStack Store Environment
-
+declare SemanticStack Environment Program
 SemanticStack = {NewCell nil} 
-Store = {NewDictionary}
-% SASCounter = {NewCell 0}
 Environment = environment()
+Program = [localvar ident(foo)
+		  [localvar ident(bar)
+		   [[bind ident(foo) [record literal(person) [literal(name) ident(bar)]]]
+		    [bind ident(bar) [record literal(person) [literal(name) ident(foo)]]]
+		    [bind ident(foo) ident(bar)]]]]
 
 proc {Push Stmt Env}
 	case Stmt of nil then skip
@@ -27,15 +40,9 @@ fun {Pull}
 	end
 end
 
-% fun {NextSASCounter}
-% 	local C = @SASCounter in
-% 		SASCounter := @SASCounter+1
-% 		C
-% 	end
-% end
-
 proc {Interpreter}
 	{Browse @SemanticStack}
+	{Browse {Dictionary.entries SAS}}
 	case @SemanticStack of nil then skip
 	else 
 		case {Pull} of semanticStatement([nop] E) then 
@@ -45,9 +52,6 @@ proc {Interpreter}
 		[] semanticStatement([bind ident(X) ident(Y)] E) then
 			{Unify ident(X) ident(Y) E}
 		[] semanticStatement([bind ident(X) V] E) then
-			% {BindValueToKeyInSAS E.X V}
-			% case V of literal(_) then {Unify ident(X) V E}
-			% skip
 			{Unify ident(X) V E}
 		[] semanticStatement(S1|S2 E) then 
 			{Push S2 E}
@@ -57,13 +61,5 @@ proc {Interpreter}
 	end
 end
 
-{Push 
-[localvar ident(foo)
-  [localvar ident(bar)
-   [[bind ident(foo) [record literal(person) [literal(name) ident(bar)]]]
-    [bind ident(bar) [record literal(person) [literal(name) ident(foo)]]]
-    [bind ident(foo) ident(bar)]]]] Environment}
+{Push Program Environment}
 {Interpreter}
-{Browse {Dictionary.entries SAS}}
-% end
-
