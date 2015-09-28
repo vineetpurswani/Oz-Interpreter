@@ -40,15 +40,9 @@ fun {Pull}
 	end
 end
 
-% fun {NextSASCounter}
-% 	local C = @SASCounter in
-% 		SASCounter := @SASCounter+1
-% 		C
-% 	end
-% end
-
 fun {AddArgsToClosure ArgListFormal ArgListActual Closure E}
-	{Browse ArgListFormal#ArgListActual}
+	% {Browse ArgListFormal#ArgListActual}
+	% {Browse Closure}
 	case ArgListFormal 
 	of nil then Closure
 	[] ident(H)|T then 
@@ -56,7 +50,50 @@ fun {AddArgsToClosure ArgListFormal ArgListActual Closure E}
 		of nil then raise error() end
 		[] ident(H1)|T1 then
 			{AddArgsToClosure T T1 {Adjoin Closure environment(H:E.H1)} E}
+		[] H1|T1 then
+			local Temp in
+				Temp = {AddKeyToSAS}
+				{BindValueToKeyInSAS Temp H1}
+				{AddArgsToClosure T T1 {Adjoin Closure environment(H:Temp)} E}
+			end			
 		end
+	end
+end
+
+fun {MakeEnvironment ArgList E}
+	case ArgList of X|Xs then
+		{Adjoin environment(X:E.X) {MakeEnvironment Xs E}}
+	else environment() end
+end
+
+fun {CalcClosure S E}
+	case S of [localvar ident(X) S1] then
+		{Record.subtract {CalcClosure S1 {Adjoin environment(X:0) E}} X}
+	[] [bind ident(X) ident(Y)] then
+		environment(X:E.X Y:E.Y)
+	[] [bind ident(X) V] then
+		environment(X:E.X)
+	[] [bind V ident(X)] then
+		environment(X:E.X)
+	[] [apply ident(X) ArgListActual] then
+		{Adjoin environment(X:E.X) {MakeEnvironment ArgListActual E}}
+	[] [conditional ident(X) S1 S2] then
+		{Adjoin {Adjoin environment(X:E.X) {CalcClosure S1 E}} {CalcClosure S2 E}}
+	[] [match ident(X) P1 S1 S2] then
+		local BindVars = {GetRecordValues P1} in
+			{Adjoin 
+				{Adjoin environment(X:E.X) 
+					{Record.subtractList {CalcClosure S1 
+						{AdjoinList E {Map BindVars fun {$ A} A#0 end}}} 
+						BindVars
+					}
+				} 
+				{CalcClosure S2 E}
+			}
+		end
+	[] S1|S2 then
+		{Adjoin {CalcClosure S1 E} {CalcClosure S2 E}}
+	else environment(nil)
 	end
 end
 
@@ -71,22 +108,34 @@ proc {Interpreter}
 			{Push S {Adjoin E environment(X:{AddKeyToSAS})}}
 		[] semanticStatement([bind ident(X) ident(Y)] E) then
 			{Unify ident(X) ident(Y) E}
-		[] semanticStatement([bind ident(X) V] E) then
-			% {BindValueToKeyInSAS E.X V}
-			% case V of literal(_) then {Unify ident(X) V E}
-			% skip
-			local Closure in
-				Closure = E % calculate your closure here
-				case V of [procedure ArgList Stmt] 
+		[] semanticStatement([bind X1 Y1] E) then
+		% Handle case for [bind literal(1) literal(2)]
+			local X V in
+				case X1 of ident(X2) then 
+					X = X2
+					V = Y1
+				else 
+					case Y1 of ident(X2) then
+						X = X2
+						V = X1
+					else raise unknownStatement() end
+					end
+				end
+
+				case V of [subr ArgList Stmt] 
 				% calculate closure. But for now I am taking the superset i.e. E
-				then 
-					% E is the current closure
-					% Closure = {AddArgsToCclosure ArgList E} 
+				then local Closure in
+					Closure = E % calculate your closure here
+					% Closure = {CalcClosure Stmt 
+					% 			{AdjoinList E {Map ArgList 
+					% 				fun {$ A} case A of ident(X) then X#0 else raise error() end end end
+					% 			}}}
 					{Unify ident(X) procedure(ArgList Stmt Closure) E}
+					end
 				else {Unify ident(X) V E}
 				end
 			end
-		[] semanticStatement([apply ident(X) ArgListActual] E) then
+		[] semanticStatement(apply|ident(X)|ArgListActual E) then
 			local XSASvalue in
 				XSASvalue = {RetrieveFromSAS E.X}
 				case XSASvalue of procedure(ArgListFormal Stmt Closure) then
@@ -106,11 +155,14 @@ proc {Interpreter}
 		[] semanticStatement([conditional ident(X) S1 S2] E) then
 			local XSASvalue in
 				XSASvalue = {RetrieveFromSAS E.X} 
+				% DOUBT - equivalence(E.X) - sometimes it is not necessary that equivalence returns the same store variable. 
+				% Eg. X=Y. In this case {RetrieveFromSAS E.X} will return equivalence(y)
 				if XSASvalue == equivalence(E.X) then raise unbound(X) end
+				% DOUBT - true or t?
 				elseif XSASvalue == literal(t) then {Push S1 E}
 				elseif XSASvalue == literal(f) then {Push S2 E}
 				else raise wrongtype(X) end
-				endd
+				end
 			end
 		% Pattern matching 
 		[] semanticStatement([match ident(X) P1 S1 S2] E) then
@@ -149,14 +201,13 @@ proc {MatchAndBind XSASvalue P1 E Match Enew}
 			SortedXSASvalue = {RecordSort XSASvalue.2.2.1}
 			SortedP1 = {RecordSort P1.2.2.1}
 			% all features must be unique. Returns true if they are not
-			if {Unique {RemoveFeatureValues SortedXSASvalue}} then Match = false 
-			elseif {Unique {RemoveFeatureValues SortedP1}} then Match = false
+			if {Unique {GetRecordKeys SortedXSASvalue}} then Match = false 
+			elseif {Unique {GetRecordKeys SortedP1}} then Match = false
 			% All corresponding features must be equal
-			elseif {RemoveFeatureValues SortedXSASvalue} \= {RemoveFeatureValues SortedP1} then Match = false
+			elseif {GetRecordKeys SortedXSASvalue} \= {GetRecordKeys SortedP1} then Match = false
 			% Now bind all using unify and if passes then Match complete
 			else
 				{CreateAndUnify SortedXSASvalue SortedP1 E Enew}
-				% {Browse Enew#fuck}
 				Match = true
 			end
 		end
@@ -174,50 +225,80 @@ proc {CreateAndUnify SortedXSASvalue SortedP1 E Enew}
 				{CreateAndUnify T1 T Etemp Enew}
 			else raise error() end
 			end
+		% [] [literal(_) V]|T1 then
+		% 	skip
+			% handle values wala case
 		else raise error() end
 		end 
 	end
 end
 
 % Make a list of all the features given the record list
-fun {RemoveFeatureValues Record}
+fun {GetRecordKeys Record}
 	case Record 
 	of nil then nil
-	[] H|T then H.1 | {RemoveFeatureValues T}
+	[] H|T then H.1 | {GetRecordKeys T}
 	end
 end
-% {Browse {RemoveFeatureValues [[literal(quuz) literal(42)] [literal(quux) literal(314)]]}}
+
+fun {GetRecordValues Record}
+	case Record 
+	of nil then nil
+	[] H|T then H.2 | {GetRecordValues T}
+	end
+end
+
+% {Browse {GetRecordKeys [[literal(quuz) literal(42)] [literal(quux) literal(314)]]}}
 % Check if features are unique
 fun {Unique FeatureList}
 		case FeatureList of nil then false
 		[] H|T then if {Member H T} then true else {Unique T} end
 		end
 end
-% {Browse {Unique {RemoveFeatureValues [[literal(quuz) literal(42)] [literal(quuz) literal(314)]]}}}
+% {Browse {Unique {GetRecordKeys [[literal(quuz) literal(42)] [literal(quuz) literal(314)]]}}}
 
 % Sort Records which are List of List
 fun {RecordSort Record}
-	{Sort Record CompareFunc}
+	{Sort Record 
+		fun {$ R1 R2}
+			case R1 of literal(F1)|T then
+				case R2 of literal(F2)|T1 then
+					if {IsNumber F1} == {IsNumber F2} then F1 < F2
+					else {IsNumber F1}
+					end
+				else raise error() end
+				end
+			else raise error() end
+			end
+		end
+	}
 end
 
 % Compare function for sorting records. If the two features are of same type then it is '<'
 % If not the number is given the preferance
-fun {CompareFunc R1 R2}
-	case R1 of literal(F1)|T then
-		case R2 of literal(F2)|T1 then
-			if {IsNumber F1} == {IsNumber F2} then F1 < F2
-			else {IsNumber F1}
-			end
-		else raise error() end
-		end
-	else raise error() end
-	end
-end
+% fun {CompareFunc R1 R2}
+% 	case R1 of literal(F1)|T then
+% 		case R2 of literal(F2)|T1 then
+% 			if {IsNumber F1} == {IsNumber F2} then F1 < F2
+% 			else {IsNumber F1}
+% 			end
+% 		else raise error() end
+% 		end
+% 	else raise error() end
+% 	end
+% end
 
 
 % Example for procedure
 
-{Push [localvar ident(result) [localvar ident(foo) [[bind ident(foo) [procedure [ident(x1)] [bind ident(x1) literal(1)]]] [apply ident(foo) [ident(result)]]]]] Environment}
+% {Push [localvar ident(result) [localvar ident(foo) [[bind ident(foo) [subr [ident(x1)] [bind ident(x1) literal(1)]]] [apply ident(foo) ident(result)]]]] Environment}
+{Push [localvar ident(foo)
+ [localvar ident(bar)
+  [[bind ident(foo)
+    [record literal(person)
+     [literal(name) ident(foo)]]]
+   [bind ident(bar) [record literal(person) [literal(name) ident(bar)]]]
+   [bind ident(foo) ident(bar)]]]] environment()}
 
 % Example for sort
 % {Browse {RecordSort [[literal(quuz) literal(42)]
@@ -242,15 +323,15 @@ end
 %     [bind ident(result) literal(t)]]
 %     ]] Environment}
 
-%     {Push 
-%  [localvar ident(foo)
-%   [localvar ident(result)
-%    [[bind ident(foo) literal(f)]
-%     [conditional ident(foo)
-%      [bind ident(result) literal(t)]
-%      [bind ident(result) literal(f)]]
-%     %% Check
-%     [bind ident(result) literal(f)]]]]Environment}
+ %    {Push 
+ % [[localvar ident(foo)
+ %  [localvar ident(result)
+ %   [[bind ident(foo) literal(f)]
+ %    [conditional ident(foo)
+ %     [bind ident(result) literal(t)]
+ %     [bind ident(result) literal(f)]]
+ %    %% Check
+ %    [bind ident(result) literal(f)]]]]] Environment}
 
 
 % for pattern match passes

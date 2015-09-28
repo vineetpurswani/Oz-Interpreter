@@ -24,7 +24,8 @@ SASCounter = {NewCell 0}
 
 proc {BindValueToKeyInSAS Key Val}
 	case {Dictionary.get SAS Key} of unbound then {Dictionary.put SAS Key Val}
-	[] reference(X) then {BindValueToKeyInSAS X Val}
+	[] reference(X) then 
+		{BindValueToKeyInSAS X Val}
 	[] X then {Raise alreadyAssigned(Key Val X)}
 	else skip end
 end
@@ -44,9 +45,11 @@ end
 
 fun {RetrieveFromSAS Key}
 	if {Dictionary.member SAS Key} then
-		case {Dictionary.get SAS Key} of unbound then equivalence(Key)
-		[] reference(X) then {RetrieveFromSAS X}
-		else {Dictionary.get SAS Key} end
+		local Value = {Dictionary.get SAS Key} in
+			case Value of unbound then equivalence(Key)
+			[] reference(X) then {RetrieveFromSAS X}
+			else Value end
+		end
 	else raise keyMissing(Key) end end
 end
 
