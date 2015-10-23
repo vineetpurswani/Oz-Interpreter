@@ -1,4 +1,0 @@
-	local l in
-		l = [ d b 1 2 c a]
-		{sort l}
-	end
