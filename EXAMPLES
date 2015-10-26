@@ -153,4 +153,10 @@
 
 
 
-
+%%---------------------Thread-------------------
+[localvar ident(foo)
+  [localvar ident(bar)
+    [spawn [bind ident(foo) literal(1)]]
+    [spawn [bind ident(bar) literal(2)]]
+    [spawn [bind ident(foo) ident(bar)]]
+  ]]
