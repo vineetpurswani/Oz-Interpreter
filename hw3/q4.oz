@@ -1,3 +1,10 @@
+%% ---------------------------------------------------------------------------------
+%% Authors:
+%% Vineet Purswani			12813
+%% Ayushman Sisodiya		12188
+%% Deepak Kumar 			12228
+%% ---------------------------------------------------------------------------------
+
 declare
 fun lazy {Append Xs Ys}
    case Xs
@@ -8,13 +15,6 @@ fun lazy {Append Xs Ys}
    end
 end
 
-declare
-%% ---------------------------------------------------------------------------------
-%% Authors:
-%% Vineet Purswani			12813
-%% Ayushman Sisodiya		12188
-%% Deepak Kumar 			12228
-%% ---------------------------------------------------------------------------------
 
 declare
 proc {Partition Pivot Xs PartitionLeft PartitionRight}
