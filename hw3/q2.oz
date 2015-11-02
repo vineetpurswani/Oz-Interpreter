@@ -8,7 +8,7 @@ fun lazy {AddStream Xs Ys}
    Xs.1+Ys.1|{AddStream Xs.2 Ys.2}
 end
 
-%Tested Works
+%Returns Y(n+1)
 declare
 fun {GetFirstTerm Ys Xs Ps}
    local T1 T2 T3 B in
@@ -27,14 +27,14 @@ fun {GetFirstTerm Ys Xs Ps}
    end
 end
 
+%Calculates the last term and recursively calls itself to generate the stream
 declare
 fun lazy {Avg Ys Xs Ps}
    {GetFirstTerm Ys Xs Ps}|{Avg Ys.2 Xs.2 Ps.2}
 end
 
-%Tested Works
 
-
+%Generates the Bits 0 or 1 in the stream Xs
 declare
 fun {GenBits}
    local X Y in
@@ -45,29 +45,35 @@ fun {GenBits}
    end
 end
 
+%Prints the Stream Ys
 declare
 proc {Printlist Ys}
    case Ys
    of H|T then
       {Browse H}
-      {Browse hello}
       {Printlist T}
    end
 end
 
 
+
+
+%TO RUN FUNCTION
+%TEST
 local Xs Ys Ps in
    thread %Producer
-      Xs = {GenBits}
-   end 
+      Xs = {GenBits} %Creates a stream of 1s and 0s
+   end
+   
    thread  %Consumer
       local PosInts Ones in
-         Ones = {GenOnes}
-         PosInts = 1|{AddStream Ones PosInts}
-         Ys = Xs.1|{Avg Ys Xs.2 PosInts}
+         Ones = {GenOnes} % Generate stream of Ones 1|1|1..
+         PosInts = 1|{AddStream Ones PosInts} % Generate Stream 1|2|3|4|5...
+         Ys = Xs.1|{Avg Ys Xs.2 PosInts} % Generate the Avg of Ones List
       end
    end
+   
    thread
-      {Printlist Ys}
+      {Printlist Ys} %Print the List Ys. Not Browse BCoz I'm generating Ys Lazily
    end
 end

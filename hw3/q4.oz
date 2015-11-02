@@ -41,10 +41,12 @@ fun lazy{QuickSort Xs}
 end
 
 
+%To Test the QuickSort
 local Len in
    X = {QuickSort [9 8 7 6 5 4 3 2 1]}
    {Browse X}
-   {Delay 2000}
-   {List.length X Len}
+   % Code below is to show laziness
+    {Delay 4000}
+    {List.length X Len}
 end
 
