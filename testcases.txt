@@ -99,3 +99,30 @@
       %% Check
       [bind ident(result) literal(25)]]]]]]
 
+
+%% Test Cases for MultiStack
+
+Program = [localvar ident(foo)
+      [localvar ident(bar)
+        [
+        [spawn [bind ident(foo) literal(f)]]
+        [spawn [conditional ident(foo) [bind ident(bar) literal(2)] [bind ident(bar) literal(0)]]]
+        ]
+      ]]
+
+Program = [localvar ident(foo)
+      [localvar ident(bar)
+        [
+        [spawn [conditional ident(foo) [bind ident(bar) literal(2)] [bind ident(bar) literal(0)]]]
+        [spawn [bind ident(foo) literal(f)]]
+        ]
+      ]]
+
+
+Program = [localvar ident(foo)
+      [localvar ident(bar)
+        [
+        [spawn [conditional ident(foo) [bind ident(bar) literal(2)] [bind ident(bar) literal(0)]]]
+        [spawn [conditional ident(foo) [bind ident(bar) literal(2)] [bind ident(bar) literal(0)]]]
+        ]
+      ]]

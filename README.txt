@@ -39,3 +39,27 @@ Questions Attempted:
 NOTE:
 a)	# character  is not allowed in the AST
 b) Some of the exceptions are handled using try-catch
+
+
+
+
+Q2. Generate two threads 1. Of bits 0 and 1    2. Average of the first list
+	To Run: Run as is in mozart. The runnable portion at end is commented
+
+Q3. Lazy Append
+	To Run: Run as is in mozart. Test case present.
+
+Q4. Lazy QSort
+	To Run: Run as is in mozart. Test case present
+
+Q5. Threaded Hamming Problem
+	To Run: Run as is in mozart. Test case present in code for 2,3,5
+
+Q6. NSelect Message Passing
+	To Run: Run as is in mozart. Test cases commented at the end portion. I've takes the
+		end statements to be procedures and ran those procedures rather than running
+		some statements.
+
+Q7. Barriering using threads
+	To Run: Run as is in mozart. Test cases commented at the end portion. Test
+		case is self explanatory
