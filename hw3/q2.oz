@@ -50,7 +50,7 @@ proc {Printlist Ys}
    case Ys
    of H|T then
       {Browse H}
-      {Browse hello}
+      % {Browse hello}
       {Printlist T}
    end
 end
@@ -68,6 +68,9 @@ local Xs Ys Ps in
       end
    end
    thread
-      {Printlist Ys}
+      {Browse {List.take Ys 10}}
+   end
+   thread
+      {Browse {List.take Xs 10}}
    end
 end

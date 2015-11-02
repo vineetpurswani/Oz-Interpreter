@@ -3,6 +3,17 @@
 %% Vineet Purswani			12813
 %% Ayushman Sisodiya		12188
 %% Deepak Kumar 			12228
+
+%% Global Variables:
+%% IndexCounter				- Thread Index Counter
+
+%% Functions and Procedures:
+%% Push 					- push a semantic statement on the semantic stack
+%% Pull 					- pull a semantic statement from the top of the semantic stack
+%% AddStack					- add a stack corresponding to a thread in the multiset
+%% GetPutEmptyStack			- handle empty stack, pop and print message
+%% GetPutSuspendedStack		- handle suspended stack over a unbound variable, pop-push and print message
+%% TopExecutableStack		- get first runnable semantic stack
 %% ---------------------------------------------------------------------------------
 
 
@@ -37,9 +48,6 @@ proc {AddStack Stmt Env}
 end
 
 fun {TopExecutableStack}
-	% if {QueueIsEmpty} == true
-	% then raise terminate() end
-	% else
 	local Helper Helper1 in
 		fun {Helper}
 			case {QueueTop}
@@ -61,7 +69,6 @@ fun {TopExecutableStack}
 		end
 		{Helper1 {Helper}}	
 	end
-	% end
 end
 
 proc {GetPutEmptyStack}

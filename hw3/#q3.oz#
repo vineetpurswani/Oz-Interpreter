@@ -11,5 +11,6 @@ end
 local X Length in
    X = {Append [1 2 3] [4 5 6]}
    %{List.length X Length} %To show laziness uncomment
-   {Browse {List.take X 10}}
+   {Browse {List.take X 10
+}}
 end
