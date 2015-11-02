@@ -33,16 +33,17 @@ declare Program
 Program = [localvar ident(foo)
 		  [localvar ident(bar)
 		    [
-		    [spawn [bind ident(foo) literal(f)]]
-		    [conditional ident(foo) [bind ident(bar) literal(2)] [bind ident(bar) literal(0)]]
+		    [spawn [conditional ident(foo) [bind ident(bar) literal(2)] [bind ident(bar) literal(0)]]]
+		    [spawn [conditional ident(foo) [bind ident(bar) literal(2)] [bind ident(bar) literal(0)]]]
+		    % [spawn [bind ident(foo) literal(f)]]
 		    % [spawn [bind ident(foo) ident(bar)]]
 		    % [spawn [bind ident(foo) literal(1)]]
 		    ]
 		  ]]
 
 proc {ThreadInterpreter SemanticStack}
-	{Browse @SemanticStack}
-	{Browse {Dictionary.entries SAS}}
+	{Browse 'SemanticStack'#@SemanticStack}
+	{Browse 'Store'#{Dictionary.entries SAS}}
 	case @SemanticStack of nil then {GetPutEmptyStack} {Interpreter}
 	else
 		case {Pull SemanticStack} of semanticStatement([nop] E) then 
@@ -169,6 +170,7 @@ proc {Interpreter}
 try
 	local Stack in
 		Stack = {TopExecutableStack}
+		% {Browse 'Starting Thread#1...'}
 		{ThreadInterpreter Stack}
 	end
 
@@ -179,9 +181,9 @@ catch Err then
 	[] notaprocedure(X) then {Browse X} {Browse '- Not a procedure'}
 	% Suspend thread. Whereas in others, terminate.
 	[] unbound(X#V) then 
-		{GetPutSuspendedStack V} 
+		% {Browse 'Current thread suspended. Reason - Unbound variable encountered.'}
+		{GetPutSuspendedStack V X} 
 		{Interpreter}
-		% {Browse X} {Browse '- is unbound. Thread suspended.'}
 	[] notabool(X) then {Browse X} {Browse '- not a bool'}
 	[] patternnotincorrectformat(SortedP1) then {Browse SortedP1} {Browse '- Pattern Not in the given format'}
 	[] error() then {Browse 'Something went wrong contact the Authors of this code'}
@@ -190,7 +192,7 @@ catch Err then
 	[] notrecord(X) then {Browse X} {Browse '- is not a record'}
 	[] incompatibleTypes(X Y) then  {Browse X} {Browse ' and '} {Browse Y} {Browse '- Bind error.'}
 	[] empty then {Browse 'Program terminated!'}
-	else {Browse 'Unidentified Exception!!'}
+	else {Browse Err#' Unidentified Exception!!'}
    end
 finally
 	skip
