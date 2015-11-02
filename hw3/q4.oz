@@ -9,6 +9,14 @@ fun lazy {Append Xs Ys}
 end
 
 declare
+%% ---------------------------------------------------------------------------------
+%% Authors:
+%% Vineet Purswani			12813
+%% Ayushman Sisodiya		12188
+%% Deepak Kumar 			12228
+%% ---------------------------------------------------------------------------------
+
+declare
 proc {Partition Pivot Xs PartitionLeft PartitionRight}
    local LVar RVar in
       case Xs

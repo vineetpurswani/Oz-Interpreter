@@ -1,3 +1,10 @@
+%% ---------------------------------------------------------------------------------
+%% Authors:
+%% Vineet Purswani			12813
+%% Ayushman Sisodiya		12188
+%% Deepak Kumar 			12228
+
+
 declare
 fun lazy {GenOnes}
    1|{GenOnes}
